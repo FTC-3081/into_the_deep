@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.common.subassems.scoring;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
 import org.firstinspires.ftc.teamcode.common.control.motionProfiles.TrapezoidMP;
 import org.firstinspires.ftc.teamcode.common.control.pidControllers.LinearPID;
@@ -95,6 +96,17 @@ public class ExtensionAssem extends RevoluteAssem implements Subassem{
     @Override
     public void read() {
         state = (encoder.read() - encoderOffset.getAsDouble() + initEncoderOffset) * MPR;
+        readCommon();
+    }
+
+    @Override
+    public void loop() {
+        if(isRetracting && isStopped() && current > 1000){
+            isRetracting = false;
+            resetPowerRange();
+            zero();
+        }
+        super.loop();
     }
 
     public double getPercentExtension(){
@@ -103,5 +115,22 @@ public class ExtensionAssem extends RevoluteAssem implements Subassem{
 
     public void setInitEncoderOffset(double initEncoderOffset){
         this.initEncoderOffset = initEncoderOffset;
+    }
+
+    @Override
+    public void zero(){
+        super.zero();
+        setInitEncoderOffset(encoderOffset.getAsDouble());
+    }
+
+    public void retract(){
+        isRetracting = true;
+        setPowerRange(new Range(-1, -0.2));
+        setPosition(0);
+    }
+
+    @Override
+    public boolean isAtPosition(){
+        return super.isAtPosition() && !isRetracting;
     }
 }

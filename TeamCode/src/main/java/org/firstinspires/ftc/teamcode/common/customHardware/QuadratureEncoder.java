@@ -18,7 +18,7 @@ public class QuadratureEncoder extends RotaryEncoder {
 
     @Override
     public double read(){
-        position = (double) motor.getCurrentPosition() * OUTPUT_SCALAR - zeroOffset;
-        return position;
+        position = (double) motor.getCurrentPosition() * OUTPUT_SCALAR;
+        return position - zeroOffset;
     }
 }

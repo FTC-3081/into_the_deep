@@ -23,7 +23,7 @@ public abstract class RotaryEncoder {
      * @return the encoder position, in radians
      */
     public double getPosition(){
-        return position;
+        return position - zeroOffset;
     }
 
     /**

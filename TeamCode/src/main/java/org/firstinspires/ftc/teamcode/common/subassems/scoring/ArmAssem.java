@@ -77,7 +77,6 @@ public class ArmAssem implements Subassem {
         pivot.read();
         telescope.read();
         telescope.zero();
-        telescope.setInitEncoderOffset(pivot.getPosition());
     }
 
     public String getTelemetryAsVector(){

@@ -6,6 +6,9 @@ import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAss
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.INTAKE_SAMPLE;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.INTAKE_SPECIMEN;
 
+import static java.lang.Math.toDegrees;
+import static java.lang.Math.toRadians;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -14,15 +17,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.common.CommandSet;
 
+import org.firstinspires.ftc.teamcode.common.Globals;
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.CommandMap;
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.CommandToggler;
 
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.InstantCommand;
 import org.firstinspires.ftc.teamcode.common.command.gamepad.GamepadEx;
+import org.firstinspires.ftc.teamcode.common.control.filters.UsefulStuff;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Pose;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
 import org.firstinspires.ftc.teamcode.common.subassems.RobotAssem;
-
+import org.firstinspires.ftc.teamcode.common.subassems.drive.SwerveModule;
 
 @Config
 @TeleOp(name="Teleop v4.0", group="Robot")
@@ -32,8 +37,9 @@ public class Teleop_v4_0 extends LinearOpMode {
 
     private double prevLoop = 0;
 
-    public static double /*Kp = 0, Kd = 0, a = 0.95, */Kf = 0.11, KfDead = 0.06, deadRange = 0.007;
-    public static double xSetpoint, ySetpoint, tSetpoint;
+//    public static double Kp = 0, Kd = 0, a = 0.95, Kf = 0, KfDead = 0, deadRange = 0;
+//    public static double tSetpoint = 0, pSetpoint = 0;
+//    double tPrev, pPrev;
 
     @Override
     public void runOpMode() {
@@ -45,6 +51,7 @@ public class Teleop_v4_0 extends LinearOpMode {
 
         robot = new RobotAssem(this);
         robot.init();
+        robot.swerve.usePowerCuts(false);
 
         CommandSet commandSet = new CommandSet(robot);
 
@@ -126,29 +133,18 @@ public class Teleop_v4_0 extends LinearOpMode {
             gamepadEx1.loop();
             CommandMap.getInstance().loop();
 
-            robot.swerve.feedforward.set(Kf);
-            robot.swerve.feedforward.set(KfDead, new Range(deadRange));
-
-//            for(SwerveModule module : robot.swerve.modules){
-//                module.controller.setGains(Kp, 0, Kd);
-//                module.controller.setFilter(a);
-//                module.controller.feedforward.set(Kf);
-//                module.controller.feedforward.set(KfDead, new Range(toRadians(deadRange)));
-//                telemetry.addData(module.getSignature(), toDegrees(UsefulStuff.normalizeAngle(module.getPosition())));
-//            }
-
             robot.loop(drivePose);
 
             robot.write();
 
             telemetry.addData("arm dm", robot.scorer.arm.getTelemetryAsVector());
             telemetry.addData("arm xy", robot.scorer.arm.getTelemetryAsPoint());
-            telemetry.addData("pose", robot.swerve.localizer.getTelemetry());
-            telemetry.addData("joystick", gamepadEx1.LeftJoystick.getMagnitude());
-            telemetry.addData("trigger", gamepadEx1.LeftTrigger.getState());
+            telemetry.addData("Pose", robot.swerve.localizer.getTelemetry());
+
             double loop = System.nanoTime();
             telemetry.addData("hz ", 1000000000 / (loop - prevLoop));
             prevLoop = loop;
+
             telemetry.update();
         }
     }

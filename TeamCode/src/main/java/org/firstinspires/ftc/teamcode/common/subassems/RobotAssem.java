@@ -6,9 +6,11 @@ import static org.firstinspires.ftc.teamcode.common.Globals.DIFFY_OFFSET_2;
 import static org.firstinspires.ftc.teamcode.common.Globals.LB_OFFSET;
 import static org.firstinspires.ftc.teamcode.common.Globals.LF_OFFSET;
 import static org.firstinspires.ftc.teamcode.common.Globals.LEVEL_OFFSET;
+import static org.firstinspires.ftc.teamcode.common.Globals.MIN_VOLTAGE;
 import static org.firstinspires.ftc.teamcode.common.Globals.RB_OFFSET;
 import static org.firstinspires.ftc.teamcode.common.Globals.RF_OFFSET;
 import static java.lang.Math.PI;
+import static java.lang.Math.max;
 import static java.lang.Math.toRadians;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -40,6 +42,7 @@ import org.firstinspires.ftc.teamcode.common.customHardware.AnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.customHardware.QuadratureEncoder;
 import org.firstinspires.ftc.teamcode.common.customHardware.TwoWheelLocalizer;
 import org.firstinspires.ftc.teamcode.common.subassems.drive.SwerveDrivetrain;
+import org.firstinspires.ftc.teamcode.common.subassems.drive.SwerveModule;
 import org.firstinspires.ftc.teamcode.common.subassems.scoring.DifferentialAssem;
 import org.firstinspires.ftc.teamcode.common.subassems.scoring.ExtensionAssem;
 import org.firstinspires.ftc.teamcode.common.subassems.scoring.MiniRevoluteAssem;
@@ -165,17 +168,41 @@ public class RobotAssem implements Subassem{
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
 //        Subassems
+        SwerveModule lfModule = new SwerveModule(
+                "lf",
+                lfDrive, lfSwerve, lfEncoder,
+                new WraparoundPID(0.3, 0, 0.02, new DirectionalFF(0.07, 0.04, new Range(toRadians(3.5))), 0.9, 0),
+                new Range(toRadians(45)),
+                LF_OFFSET
+        );
+        SwerveModule rfModule = new SwerveModule(
+                "rf",
+                rfDrive, rfSwerve, rfEncoder,
+                new WraparoundPID(0.3, 0, 0.02, new DirectionalFF(0.09, 0.06, new Range(toRadians(3.5))), 0.9, 0),
+                new Range(toRadians(45)),
+                RF_OFFSET
+        );
+        SwerveModule lbModule = new SwerveModule(
+                "lb",
+                lbDrive, lbSwerve, lbEncoder,
+                new WraparoundPID(0.3, 0, 0.02, new DirectionalFF(0.08, 0.05, new Range(toRadians(3.5))), 0.9, 0),
+                new Range(toRadians(45)),
+                LB_OFFSET
+        );
+        SwerveModule rbModule = new SwerveModule(
+                "rb", rbDrive, rbSwerve, rbEncoder,
+                new WraparoundPID(0.3, 0, 0.02, new DirectionalFF(0.08, 0.06, new Range(toRadians(3.5))), 0.9, 0),
+                new Range(toRadians(45)),
+                RB_OFFSET
+        );
         swerve = new SwerveDrivetrain(
-                lfDrive, rfDrive, lbDrive, rbDrive,
-                lfSwerve, rfSwerve, lbSwerve, rbSwerve,
-                lfEncoder, rfEncoder, lbEncoder, rbEncoder,
+                lfModule, rfModule, lbModule, rbModule,
                 localizer,
-                new LinearPID(0, 0, 0, 0, 0),
-                new LinearPID(0, 0, 0, 0, 0),
-                new WraparoundPID(0.35, 0, 0.005, 0.95, 0),
-                new DirectionalFF(0.11, 0.006, new Range(0.007)),
+                new LinearPID(0.002, 0, 0.0002, 0.9, 0),
+                new LinearPID(0.002, 0, 0.0002, 0.9, 0),
+                new WraparoundPID(0.35, 0, 0.004, 0.95, 0),
+                new DirectionalFF(0.11, 0.007, new Range(0.007)),
                 new Range(5), new Range(toRadians(2.5)),
-                LF_OFFSET, RF_OFFSET, LB_OFFSET, RB_OFFSET,
                 228, 228
         );
         diffy = new DifferentialAssem(
@@ -193,23 +220,23 @@ public class RobotAssem implements Subassem{
         );
         telescope = new ExtensionAssem(
                 new LinearPID(
-                        0.00115, 0, 0.00025,
-                        new ExtensionFF(0.2, 0.35, 0.42, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.15, new Range(5)),
-                        0.95, 0), // ff (-0.2, 0.2), (-0.32, 0.32), (0.06, 0.37)
-                new TrapezoidMP(new Constraints(2000, 15000), new Constraints(2000, 15000, 10000)),
-                new Range(0, 295 * 2), new Range(5), new Range(0.1), 48 * 2 * 2,
+                        0.0018, 0, 0.00013,
+                        new ExtensionFF(0.16, 0.18, 0.25, -0.02, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.13, new Range(3)),
+                        0.95, 0), // ff (-0.16, 0.16), (-0.18, 0.18), (-0.03, 0.25)
+                new TrapezoidMP(new Constraints(2400, 30000), new Constraints(2400, 30000, 15000)),
+                new Range(0, 295 * 2), new Range(5), new Range(2.5), 48 * 2 * 2,
                 () -> pivot.getPosition(),
-                new QuadratureEncoder(lfDrive, 28, 4),
+                new QuadratureEncoder(lfDrive, 28, (double)85/12),
                 lTelescope, rTelescope
         );
         pivot = new RevoluteAssem(
                 new LinearPID(
-                        0.33, 0, 0.04,
-                        new PivotFF(0.15, 0.33, 0.1, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.08, new Range(toRadians(3))),
-                        0.9, 0), // ff (-0.09, 0.09), (-0.15, x), (-0.33, y)
-                new TrapezoidMP(new Constraints(toRadians(500), toRadians(7500))),
-                new Range(-2.1, 1.9), new Range(toRadians(3)), new Range(0.01),
-                new AnalogEncoder(pivotEncoder, 2.2, 1, Math.PI, 0),
+                        0.35, 0, 0.02,
+                        new PivotFF(0.15, 0.34, 0.09, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.06, new Range(toRadians(1))),
+                        0.9, 0), // ff (-0.09, 0.09), (-0.15, x), (-0.34, y)
+                new TrapezoidMP(new Constraints(toRadians(350), toRadians(5000))),
+                new Range(-2.1, 2.1), new Range(toRadians(3)), new Range(0.01),
+                new AnalogEncoder(pivotEncoder, 2.16, 1, toRadians(181), 0),
                 fPivot, bPivot
         );
         arm = new ArmAssem(
@@ -261,6 +288,6 @@ public class RobotAssem implements Subassem{
     }
 
     public static double getVoltage(){
-        return voltage;
+        return max(voltage, MIN_VOLTAGE);
     }
 }

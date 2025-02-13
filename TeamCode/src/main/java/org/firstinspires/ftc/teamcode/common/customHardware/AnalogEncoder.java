@@ -37,7 +37,7 @@ public class AnalogEncoder extends RotaryEncoder{
 
     @Override
     public double read(){
-        position = filter.loop(analogInput.getVoltage() * OUTPUT_SCALAR - zeroOffset);
-        return position;
+        position = filter.loop(analogInput.getVoltage() * OUTPUT_SCALAR);
+        return position - zeroOffset;
     }
 }

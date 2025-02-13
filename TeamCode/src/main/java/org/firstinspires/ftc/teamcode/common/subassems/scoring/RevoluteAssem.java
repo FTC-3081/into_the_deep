@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode.common.subassems.scoring;
 
+import static java.lang.Math.abs;
+
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.common.control.filters.LowPassFilter;
 import org.firstinspires.ftc.teamcode.common.control.filters.UsefulStuff;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
 import org.firstinspires.ftc.teamcode.common.control.motionProfiles.TrapezoidMP;
@@ -15,24 +19,30 @@ public class RevoluteAssem implements Subassem {
     protected final DcMotorEx[] motors;
     protected final RotaryEncoder encoder;
 
-    protected final ElapsedTime timer = new ElapsedTime();
+    protected final ElapsedTime velocityTimer = new ElapsedTime();
+    protected final ElapsedTime setpointTimer = new ElapsedTime();
+    protected final ElapsedTime stopTimer = new ElapsedTime();
 
     public LinearPID[] controllers = new LinearPID[2];
     public TrapezoidMP profiler;
     protected int activeController = 0;
     protected boolean enableMP = false;
+    protected boolean isRetracting = false;
 
     protected final Range positionRange;
     protected final Range accuracyRange;
     protected final Range velocityRange;
-    protected final Range motorRange = new Range(-1, 1);
+    protected Range powerRange = new Range(-1, 1);
+
+    protected final LowPassFilter velocityFilter = new LowPassFilter(0.75);
 
     protected double state = 0;
     protected double prevState = 0;
     protected double velocity = 0;
     protected double setpoint = 0;
+    protected double prevSetpoint = 0;
     protected double power = 0;
-    protected double overridePower = 0;
+    protected double current = 0;
 
     /**
      * Revolute assembly with an alternate PID controller and a motion profile
@@ -123,14 +133,23 @@ public class RevoluteAssem implements Subassem {
     @Override
     public void read() {
         state = UsefulStuff.normalizeAngle(encoder.read());
-        velocity = (state - prevState) / timer.time();
-        timer.reset();
+    }
+
+    protected void readCommon(){
+        velocity = velocityFilter.loop((state - prevState) / velocityTimer.time());
+        velocityTimer.reset();
         prevState = state;
+        if(!velocityRange.contains(velocity)) stopTimer.reset();
+        current = 0;
+        for(DcMotorEx motor : motors){
+            current += motor.getCurrent(CurrentUnit.MILLIAMPS);
+        }
+        current /= motors.length;
     }
 
     @Override
     public void loop() {
-        power = motorRange.constrain(controllers[activeController].getFeedback(enableMP ? profiler.getInstantSetpoint() : setpoint, state) + overridePower);
+        power = powerRange.constrain(controllers[activeController].getFeedback(enableMP ? profiler.getInstantSetpoint() : setpoint, state));
     }
 
     @Override
@@ -143,8 +162,10 @@ public class RevoluteAssem implements Subassem {
      * @param setpoint the new setpoint, in millimeters or radians
      */
     public void setPosition(double setpoint){
+        prevSetpoint = this.setpoint;
         if(enableMP) profiler.setProfile(state, setpoint);
         this.setpoint = positionRange.constrain(setpoint);
+        setpointTimer.reset();
     }
 
     public double getPosition(){
@@ -155,6 +176,10 @@ public class RevoluteAssem implements Subassem {
         return velocity;
     }
 
+    public double getCurrent(){
+        return current;
+    }
+
     public void setController(int active){
         this.activeController = active;
     }
@@ -163,8 +188,12 @@ public class RevoluteAssem implements Subassem {
         return accuracyRange.contains(setpoint - state);
     }
 
+    public boolean isAtPosition(double testSetpoint){
+        return accuracyRange.contains(testSetpoint - state);
+    }
+
     public boolean isStopped(){
-        return velocityRange.contains(velocity);
+        return stopTimer.time() > 0.1 && setpointTimer.time() > 0.1;
     }
 
     public void enableMP(boolean enableMP){
@@ -175,7 +204,11 @@ public class RevoluteAssem implements Subassem {
         encoder.zero();
     }
 
-    public void overridePID(double overridePower){
-        this.overridePower = overridePower;
+    public void setPowerRange(Range powerRange){
+        this.powerRange = powerRange;
+    }
+
+    public void resetPowerRange(){
+        setPowerRange(new Range(-1, 1));
     }
 }

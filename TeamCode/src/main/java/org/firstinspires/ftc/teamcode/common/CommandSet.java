@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.common;
 
-import static org.firstinspires.ftc.teamcode.common.Globals.ARM_Y_HIGH_BAR;
 import static org.firstinspires.ftc.teamcode.common.Globals.ARM_Y_HIGH_BAR_SNAP;
 import static org.firstinspires.ftc.teamcode.common.Globals.DIFFY_INTAKE_SAMPLE_1;
 import static org.firstinspires.ftc.teamcode.common.Globals.DIFFY_INTAKE_SIDE_1;
@@ -12,7 +11,6 @@ import static org.firstinspires.ftc.teamcode.common.Globals.MIN_DRIVE_SPEED;
 import static org.firstinspires.ftc.teamcode.common.Globals.MIN_TURN_SPEED;
 import static org.firstinspires.ftc.teamcode.common.Globals.SNAP_OVERRIDE_POWER;
 import static org.firstinspires.ftc.teamcode.common.Globals.ROLLER_BARF_TIME;
-import static org.firstinspires.ftc.teamcode.common.Globals.SNAP_THRESHOLD_VELOCITY;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.HIGH_BAR;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.HIGH_BAR_SNAP;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.HIGH_BASKET;
@@ -29,6 +27,7 @@ import org.firstinspires.ftc.teamcode.common.command.commandStructure.PauseUntil
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.SequenceCommand;
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.TimedPauseCommand;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Pose;
+import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
 import org.firstinspires.ftc.teamcode.common.subassems.RobotAssem;
 import org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem;
 
@@ -66,6 +65,10 @@ public class CommandSet {
 
 
 //    Arm / Scoring
+    public final InstantCommand retractTelescope = new InstantCommand(
+        () -> robot.scorer.arm.telescope.retract()
+    );
+
     public final InstantCommand setArmIdle = new InstantCommand(
             () -> robot.scorer.setPosition(ScoringAssem.Setpoint.IDLE)
     );
@@ -77,8 +80,12 @@ public class CommandSet {
     public final SequenceCommand retractFromHighBasket = new SequenceCommand(
             rollerBarf,
             new TimedPauseCommand(ROLLER_BARF_TIME),
-            rollerStop,
-            setArmIdle
+            new ParallelCommand(
+                    rollerStop,
+                    setArmIdle,
+                    retractTelescope
+            )
+
     );
 
     public final InstantCommand extendToHighBar = new InstantCommand(
@@ -87,20 +94,21 @@ public class CommandSet {
 
     public final SequenceCommand retractFromHighBar = new SequenceCommand(
             new InstantCommand(() -> robot.scorer.arm.telescope.enableMP(false)),
-            new InstantCommand(() -> robot.scorer.arm.telescope.overridePID(SNAP_OVERRIDE_POWER)),
+            new InstantCommand(() -> robot.scorer.arm.telescope.setPowerRange(new Range(SNAP_OVERRIDE_POWER, 1))),
             new InstantCommand(() -> robot.scorer.setPosition(HIGH_BAR_SNAP)),
             new ParallelRaceCommand(
-                    new PauseUntilCommand(() -> (robot.scorer.arm.isStopped() && robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR + 10)),
+                    new PauseUntilCommand(() -> robot.scorer.arm.isStopped()), //(robot.scorer.arm.isStopped() && robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR + 10)),
                     new PauseUntilCommand(() -> (robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR_SNAP))
                     ),
-            new InstantCommand(() -> robot.scorer.arm.telescope.overridePID(0)),
+            new InstantCommand(() -> robot.scorer.arm.telescope.resetPowerRange()),
             new InstantCommand(() -> robot.scorer.arm.telescope.enableMP(true)),
             rollerBarf,
             new ParallelCommand(
                     new SequenceCommand(
                             new TimedPauseCommand(ROLLER_BARF_TIME),
                             rollerStop,
-                            setArmIdle
+                            setArmIdle,
+                            retractTelescope
                     ),
                     new InstantCommand(() -> robot.scorer.arm.setPosition(robot.scorer.arm.offset))
             )
@@ -133,7 +141,8 @@ public class CommandSet {
     public final SequenceCommand retractSubmersible = new SequenceCommand(
             new InstantCommand(() -> robot.scorer.setDiffyLevel(true)),
             setArmIdle,
-            new PauseUntilCommand(() -> robot.scorer.arm.pivot.isAtPosition()),
+            retractTelescope,
+            new PauseUntilCommand(() -> robot.scorer.arm.isAtPosition()),
             new InstantCommand(() -> robot.scorer.setDiffyLevel(false)),
             setArmIdle
     );
@@ -161,7 +170,7 @@ public class CommandSet {
 
     public SequenceCommand driveToPosition(double x, double y, double t){
         return new SequenceCommand(
-                new InstantCommand(() -> robot.swerve.setPosition(new Pose(x, y, t))),
+                new InstantCommand(() -> robot.swerve.setPosition(new Pose(x, y, toRadians(t)))),
                 new PauseUntilCommand(() -> robot.swerve.isAtPosition())
         );
     }

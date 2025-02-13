@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.common.control.pidControllers;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.Globals;
-import org.firstinspires.ftc.teamcode.common.control.feedforwards.ConstantFF;
 import org.firstinspires.ftc.teamcode.common.control.feedforwards.DirectionalFF;
 import org.firstinspires.ftc.teamcode.common.control.filters.LowPassFilter;
 import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
@@ -73,7 +72,7 @@ public class LinearPID {
         timer.reset();
 
         // Calculate and return feedback
-        return (Globals.OPERATING_VOLTAGE / RobotAssem.getVoltage()) * ((Kp * error) + (Ki * integral) + (Kd * derivative) + feedforward.get(error));
+        return (Globals.MAX_VOLTAGE / RobotAssem.getVoltage()) * ((Kp * error) + (Ki * integral) + (Kd * derivative) + feedforward.get(error));
     }
 
     public double getKp(){
