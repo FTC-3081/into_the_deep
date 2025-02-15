@@ -201,8 +201,8 @@ public class RobotAssem implements Subassem{
                 new LinearPID(0.002, 0, 0.0002, 0.9, 0),
                 new LinearPID(0.002, 0, 0.0002, 0.9, 0),
                 new WraparoundPID(0.35, 0, 0.004, 0.95, 0),
-                new DirectionalFF(0.11, 0.007, new Range(0.007)),
-                new Range(5), new Range(toRadians(2.5)),
+                new DirectionalFF(0.11, 0.03, new Range(0.008)),
+                new Range(7.5), new Range(toRadians(2.5)),
                 228, 228
         );
         diffy = new DifferentialAssem(
@@ -221,7 +221,7 @@ public class RobotAssem implements Subassem{
         telescope = new ExtensionAssem(
                 new LinearPID(
                         0.0018, 0, 0.00013,
-                        new ExtensionFF(0.16, 0.18, 0.25, -0.02, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.13, new Range(3)),
+                        new ExtensionFF(0.18, 0.2, 0.25, -0.02, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.12, new Range(3)),
                         0.95, 0), // ff (-0.16, 0.16), (-0.18, 0.18), (-0.03, 0.25)
                 new TrapezoidMP(new Constraints(2400, 30000), new Constraints(2400, 30000, 15000)),
                 new Range(0, 295 * 2), new Range(5), new Range(2.5), 48 * 2 * 2,
@@ -231,8 +231,8 @@ public class RobotAssem implements Subassem{
         );
         pivot = new RevoluteAssem(
                 new LinearPID(
-                        0.35, 0, 0.02,
-                        new PivotFF(0.15, 0.34, 0.09, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.06, new Range(toRadians(1))),
+                        0.35, 0, 0.03,
+                        new PivotFF(0.15, 0.33, 0.08, () -> pivot.getPosition(), () -> telescope.getPercentExtension(), 0.06, new Range(toRadians(1))),
                         0.9, 0), // ff (-0.09, 0.09), (-0.15, x), (-0.34, y)
                 new TrapezoidMP(new Constraints(toRadians(350), toRadians(5000))),
                 new Range(-2.1, 2.1), new Range(toRadians(3)), new Range(0.01),

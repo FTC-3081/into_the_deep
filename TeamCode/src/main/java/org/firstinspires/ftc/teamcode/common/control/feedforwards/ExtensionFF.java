@@ -12,7 +12,7 @@ public class ExtensionFF extends DirectionalFF{
 
     private final DoubleSupplier position;
     private final DoubleSupplier scalar;
-    private final double KfHMin, KfHMax, KfV, Kg;
+    private final double KfHMin, KfHMax, KfV, Kg, otherThing;
 
     /**
      * Represents the extension of an arm that pivots and extends (assume 0 degrees to be up and 90 to be forward)
@@ -24,17 +24,20 @@ public class ExtensionFF extends DirectionalFF{
      * @param scalar the getPercentExtension() method for the extension assembly
      */
     public ExtensionFF(double frictionMin, double frictionMax, double gravityUp, double gravityDown, DoubleSupplier position, DoubleSupplier scalar, double KfDead, Range deadRange){
-        super(frictionMin, KfDead, deadRange);
+        super(frictionMin, 0, deadRange);
         this.position = position;
         this.scalar = scalar;
         Kg = (gravityUp + gravityDown) / 2;
         KfV = gravityUp - Kg;
         KfHMin = frictionMin - KfV;
         KfHMax = frictionMax - frictionMin;
+        otherThing = KfDead;
     }
 
     public double get(double error){
-        set(KfV + ((KfHMin + (KfHMax * scalar.getAsDouble())) * abs(sin(position.getAsDouble()))));
+        double thing = KfV + ((KfHMin + (KfHMax * scalar.getAsDouble())) * abs(sin(position.getAsDouble())));
+        set(thing);
+        set(thing - otherThing, deadRange);
         return Kg * cos(position.getAsDouble()) + super.get(error);
     }
 }

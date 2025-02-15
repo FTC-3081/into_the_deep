@@ -6,8 +6,8 @@ import org.firstinspires.ftc.teamcode.common.control.geometry.Range;
 
 public class DirectionalFF extends ConstantFF {
 
-    private double KfOffset, KfDead;
-    private Range deadRange;
+    protected double KfOffset, KfDead;
+    protected Range deadRange;
 
     /**
      * Represents a vertical extension in which different forces must be applied to overcome gravity going up and friction coming down

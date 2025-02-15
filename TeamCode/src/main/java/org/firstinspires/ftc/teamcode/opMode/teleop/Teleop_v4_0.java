@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAss
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.INTAKE_SAMPLE;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.INTAKE_SPECIMEN;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
 
@@ -56,7 +57,7 @@ public class Teleop_v4_0 extends LinearOpMode {
         CommandSet commandSet = new CommandSet(robot);
 
         CommandMap.getInstance().mapCommand(
-                gamepadEx1.Guide::wasJustPressed,
+                gamepadEx1.Back::wasJustPressed,
                 new InstantCommand(() -> robot.swerve.localizer.resetIMU())
         );
 
@@ -112,6 +113,22 @@ public class Teleop_v4_0 extends LinearOpMode {
         CommandMap.getInstance().mapCommand(
                 () -> ((!gamepadEx1.Y.isPressed() && !gamepadEx1.A.isPressed() && robot.scorer.isIntaking())),
                 commandSet.rollerStop
+        );
+
+//        Manual Control
+        CommandMap.getInstance().mapCommand(
+                gamepadEx1.Start::wasJustPressed,
+                new CommandToggler(commandSet.enableManualArmControl, commandSet.disableManualArmControl)
+        );
+
+        CommandMap.getInstance().mapCommand(
+                () -> (abs(gamepadEx1.RightJoystick.getX()) > abs(gamepadEx1.RightJoystick.getY()) || gamepadEx1.RightJoystick.getX() == 0),
+                new InstantCommand(() -> robot.scorer.arm.pivot.setPower(gamepadEx1.RightJoystick.getX() * 0.5))
+        );
+
+        CommandMap.getInstance().mapCommand(
+                () -> (abs(gamepadEx1.RightJoystick.getY()) > abs(gamepadEx1.RightJoystick.getX()) || gamepadEx1.RightJoystick.getY() == 0),
+                new InstantCommand(() -> robot.scorer.arm.telescope.setPower(gamepadEx1.RightJoystick.getY()))
         );
 
         waitForStart();

@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode.opMode.auto;
 
 import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_T_1;
+import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_T_2;
 import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_X_1;
+import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_X_2;
 import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_Y_1;
+import static org.firstinspires.ftc.teamcode.common.Globals.SAMPLE_AUTO_Y_2;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.IDLE;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -43,7 +46,9 @@ public class SampleAuto_v4_0 extends LinearOpMode {
                 () -> false,
                 new SequenceCommand( true,
                         commandSet.driveToPosition(SAMPLE_AUTO_X_1, SAMPLE_AUTO_Y_1, SAMPLE_AUTO_T_1),
-                        commandSet.scoreSample
+                        commandSet.scoreSample1,
+                        commandSet.driveToPosition(SAMPLE_AUTO_X_2, SAMPLE_AUTO_Y_2, SAMPLE_AUTO_T_2),
+                        commandSet.scoreSample2
                 )
         );
 

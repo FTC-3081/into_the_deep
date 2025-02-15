@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.common.subassems.scoring;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -28,6 +29,7 @@ public class RevoluteAssem implements Subassem {
     protected int activeController = 0;
     protected boolean enableMP = false;
     protected boolean isRetracting = false;
+    protected boolean manual = false;
 
     protected final Range positionRange;
     protected final Range accuracyRange;
@@ -149,7 +151,8 @@ public class RevoluteAssem implements Subassem {
 
     @Override
     public void loop() {
-        power = powerRange.constrain(controllers[activeController].getFeedback(enableMP ? profiler.getInstantSetpoint() : setpoint, state));
+        if(!manual) power = powerRange.constrain(controllers[activeController].getFeedback(enableMP ? profiler.getInstantSetpoint() : setpoint, state));
+        else if(power == 0) power = powerRange.constrain(controllers[activeController].feedforward.get(0));
     }
 
     @Override
@@ -210,5 +213,13 @@ public class RevoluteAssem implements Subassem {
 
     public void resetPowerRange(){
         setPowerRange(new Range(-1, 1));
+    }
+
+    public void setManual(boolean manual){
+        this.manual = manual;
+    }
+
+    public void setPower(double power){
+        this.power = power;
     }
 }

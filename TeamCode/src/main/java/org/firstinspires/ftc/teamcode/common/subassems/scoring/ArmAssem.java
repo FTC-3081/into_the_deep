@@ -86,4 +86,9 @@ public class ArmAssem implements Subassem {
     public String getTelemetryAsPoint(){
         return "(" + getPositionAsPoint().x + ", " + getPositionAsPoint().y + ")";
     }
+
+    public void setManual(boolean manual){
+        telescope.setManual(manual);
+        pivot.setManual(manual);
+    }
 }

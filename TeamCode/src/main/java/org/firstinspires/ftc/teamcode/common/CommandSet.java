@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.common;
 
+import static org.firstinspires.ftc.teamcode.common.Globals.ARM_Y_HIGH_BAR;
 import static org.firstinspires.ftc.teamcode.common.Globals.ARM_Y_HIGH_BAR_SNAP;
 import static org.firstinspires.ftc.teamcode.common.Globals.DIFFY_INTAKE_SAMPLE_1;
 import static org.firstinspires.ftc.teamcode.common.Globals.DIFFY_INTAKE_SIDE_1;
@@ -17,6 +18,7 @@ import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAss
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.IDLE;
 import static org.firstinspires.ftc.teamcode.common.subassems.scoring.ScoringAssem.Setpoint.INTAKE_SPECIMEN;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.toRadians;
 
 import org.firstinspires.ftc.teamcode.common.command.commandStructure.Command;
@@ -65,8 +67,16 @@ public class CommandSet {
 
 
 //    Arm / Scoring
+    public final InstantCommand enableManualArmControl = new InstantCommand(
+            () -> robot.scorer.arm.setManual(true)
+    );
+
+    public final InstantCommand disableManualArmControl = new InstantCommand(
+            () -> robot.scorer.arm.setManual(false)
+    );
+
     public final InstantCommand retractTelescope = new InstantCommand(
-        () -> robot.scorer.arm.telescope.retract()
+            () -> robot.scorer.arm.telescope.retract()
     );
 
     public final InstantCommand setArmIdle = new InstantCommand(
@@ -97,7 +107,7 @@ public class CommandSet {
             new InstantCommand(() -> robot.scorer.arm.telescope.setPowerRange(new Range(SNAP_OVERRIDE_POWER, 1))),
             new InstantCommand(() -> robot.scorer.setPosition(HIGH_BAR_SNAP)),
             new ParallelRaceCommand(
-                    new PauseUntilCommand(() -> robot.scorer.arm.isStopped()), //(robot.scorer.arm.isStopped() && robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR + 10)),
+                    new PauseUntilCommand(() -> (abs(robot.scorer.arm.telescope.getVelocity()) < 5 && robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR + 10)),
                     new PauseUntilCommand(() -> (robot.scorer.arm.getPositionAsPoint().y > ARM_Y_HIGH_BAR_SNAP))
                     ),
             new InstantCommand(() -> robot.scorer.arm.telescope.resetPowerRange()),
@@ -182,10 +192,18 @@ public class CommandSet {
             new PauseUntilCommand(() -> robot.scorer.arm.isAtPosition())
     );
 
-    public SequenceCommand scoreSample = new SequenceCommand(
+    public SequenceCommand scoreSample1 = new SequenceCommand(
             extendToHighBasket,
-            new PauseUntilCommand(() -> robot.scorer.arm.isAtPosition()),
+            new PauseUntilCommand(() -> robot.scorer.arm.isAtPosition())
+    );
+
+    public SequenceCommand scoreSample2 = new SequenceCommand(
             retractFromHighBasket,
             new PauseUntilCommand(() -> robot.scorer.arm.isAtPosition())
+    );
+
+    public SequenceCommand scoreSample = new SequenceCommand(
+            scoreSample1,
+            scoreSample2
     );
 }
